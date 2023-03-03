@@ -9,6 +9,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<ctype.h>
+#include "part_of_the_island.h"
 
 char* GetString(int *len)
 {
@@ -55,17 +56,28 @@ int main()
   int res = 0;
   while(res == 0){
     printf("Please, enter an island area: ");
-    int res = InputNumber(&islandArea);
-    printf("%d\n", islandArea);
+    res = InputNumber(&islandArea);
   }
   res = 0;
   while(res == 0){
     printf("Please, enter a quantity of pirots: ");
-    int res = InputNumber(&pirotsQuantity);
+    res = InputNumber(&pirotsQuantity);
   }
-  printf("%d\n", pirotsQuantity);
-  printf("%d\n", islandArea);
-  partsNumber = islandArea / pirotsQuantity;
-  printf("%d\n", partsNumber);
+  int minPartArea = 1;
+  if(islandArea > pirotsQuantity) {
+    minPartArea = islandArea / pirotsQuantity;
+  }
+  partsNumber = islandArea / minPartArea;
+  printf("The island will be divided for %d parts\n", partsNumber);
+  res = 0;
+  int treasureNumber = 0;
+  while(res == 0){
+    printf("Please, enter the number of the part where the treasure will be hidden: ");
+    res = InputNumber(&treasureNumber);
+    if(treasureNumber > partsNumber || treasureNumber < 1){
+      printf("This number is incorrect. Please, try again\n");
+      res = 0;
+    }
+  }
   return 0;
 }
