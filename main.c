@@ -15,7 +15,8 @@
 
 sem_t island;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-struct part_of_the_island * Parts ;
+struct part_of_the_island * Parts;
+struct timespec ts;
 
 char* GetString(int *len)
 {
@@ -53,12 +54,29 @@ int InputNumber(int* val)
 void* group(void* group_number)
 {
   int numb = *((int *)group_number);
-  printf("The group number %d of %d pirots is ready\n", numb + 1, 1);
+  int pirots = Parts[numb].pirotsQuantity;
+  printf("The group number %d of %d pirots is ready\n", numb + 1, pirots);
   int pirotsWaiting = 0;
   int pirotsSeaking = 0;
   pthread_mutex_lock(&mutex);
   pirotsWaiting++;
   pthread_mutex_unlock(&mutex);
+  sem_wait(&island);
+  pthread_mutex_lock(&mutex);
+  pirotsWaiting--;
+  printf("The group number %d have started seaking\n", numb);
+  pthread_mutex_unlock(&mutex);
+  ts.tv_sec = rand() % Parts[numb].pirotsQuantity + 3;
+  ts.tv_nsec = 0;
+  nanosleep(&ts, NULL);
+  if(Parts[numb].has_treasure == 1)
+  {
+    printf("The group number %d have found a treasure!\n", numb);
+  }
+  else
+  {
+    printf("The group number %d have found nothing\n", numb);
+  }
   return NULL;
 }
 
@@ -77,6 +95,26 @@ int getTreasureNumber(int partsNumber)
   return treasureNumber;
 }
 
+void hideTreasure(int partsNumber, int minPartArea, int treasureNumber, int groupIds[], int minGroup)
+{
+  for(int i = 0; i < partsNumber; i++)
+  {
+    Parts[i].common_area = minPartArea;
+    Parts[i].explored_area = 0;
+    Parts[i].pirotsQuantity = minGroup;
+    if(treasureNumber == i + 1)
+    {
+      Parts[i].has_treasure = 1;
+    }
+    else
+    {
+      Parts[i].has_treasure = 0;
+    }
+    printf("%d\n", i);
+    groupIds[i] = i;
+  }
+}
+
 int main()
 { 
   int islandArea;
@@ -92,12 +130,13 @@ int main()
     printf("Please, enter a quantity of pirots: ");
     res = InputNumber(&pirotsQuantity);
   }
-  
   int minPartArea = 1;
   if(islandArea > pirotsQuantity) {
     minPartArea = islandArea / pirotsQuantity;
   }
   partsNumber = islandArea / minPartArea;
+  int minGroup = pirotsQuantity / partsNumber;
+  printf("%d\n", minGroup);
   printf("The island will be divided for %d parts\n", partsNumber);
 
   sem_init(&island, 0, partsNumber);
@@ -107,21 +146,13 @@ int main()
   res = 0;
   int treasureNumber = getTreasureNumber(partsNumber);
   Parts = (part_of_the_island *) malloc(sizeof(part_of_the_island) * partsNumber);
+  hideTreasure(partsNumber, minPartArea, treasureNumber, groupIds, minGroup);
   for(int i = 0; i < partsNumber; i++)
   {
-    Parts[i].common_area = minPartArea;
-    Parts[i].explored_area = 0;
-    if(treasureNumber == i + 1)
-    {
-      Parts[i].has_treasure = 1;
-    }
-    else
-    {
-      Parts[i].has_treasure = 0;
-    }
-    printf("%d\n", i);
-    groupIds[i] = i;
     pthread_create(&groups[i], NULL, group, &groupIds[i]);
+    ts.tv_sec = rand() % 3;
+    ts.tv_nsec = 0;
+    nanosleep(&ts, NULL);
   }
   for (int i = 0; i < partsNumber; i++) {
     pthread_join(groups[i], NULL);
