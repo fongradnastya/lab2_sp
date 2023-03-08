@@ -15,6 +15,7 @@
 
 sem_t island;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+struct part_of_the_island * Parts ;
 
 char* GetString(int *len)
 {
@@ -53,13 +54,29 @@ void* group(void* group_number)
 {
   int numb = *((int *)group_number);
   printf("The group number %d of %d pirots is ready\n", numb + 1, 1);
+  int pirotsWaiting = 0;
+  int pirotsSeaking = 0;
+  pthread_mutex_lock(&mutex);
+  pirotsWaiting++;
+  pthread_mutex_unlock(&mutex);
   return NULL;
 }
 
-/*!
-Запускает основной процесс программы
-\return код завершения программы
-*/
+int getTreasureNumber(int partsNumber)
+{
+  int treasureNumber = 0;
+  int res = 0;
+  while(res == 0){
+    printf("Please, enter the number of the part where the treasure will be hidden: ");
+    res = InputNumber(&treasureNumber);
+    if(treasureNumber > partsNumber || treasureNumber < 1){
+      printf("This number is incorrect. Please, try again\n");
+      res = 0;
+    }
+  }
+  return treasureNumber;
+}
+
 int main()
 { 
   int islandArea;
@@ -82,19 +99,14 @@ int main()
   }
   partsNumber = islandArea / minPartArea;
   printf("The island will be divided for %d parts\n", partsNumber);
+
+  sem_init(&island, 0, partsNumber);
   pthread_t groups[partsNumber];
   int groupIds[partsNumber]; ///
+
   res = 0;
-  int treasureNumber = 0;
-  while(res == 0){
-    printf("Please, enter the number of the part where the treasure will be hidden: ");
-    res = InputNumber(&treasureNumber);
-    if(treasureNumber > partsNumber || treasureNumber < 1){
-      printf("This number is incorrect. Please, try again\n");
-      res = 0;
-    }
-  }
-  struct part_of_the_island Parts [partsNumber];
+  int treasureNumber = getTreasureNumber(partsNumber);
+  Parts = (part_of_the_island *) malloc(sizeof(part_of_the_island) * partsNumber);
   for(int i = 0; i < partsNumber; i++)
   {
     Parts[i].common_area = minPartArea;
@@ -114,5 +126,7 @@ int main()
   for (int i = 0; i < partsNumber; i++) {
     pthread_join(groups[i], NULL);
   }
+  sem_destroy(&island);
+  free(Parts);
   return 0;
 }
