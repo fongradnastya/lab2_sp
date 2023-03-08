@@ -9,7 +9,12 @@
 #include<stdlib.h>
 #include<string.h>
 #include<ctype.h>
+#include<semaphore.h>
+#include<pthread.h>
 #include "part_of_the_island.h"
+
+sem_t island;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 char* GetString(int *len)
 {
@@ -44,12 +49,19 @@ int InputNumber(int* val)
     return 1;
 }
 
+void* group(void* group_number)
+{
+  int numb = *((int *)group_number);
+  printf("The group number %d of %d pirots is ready\n", numb + 1, 1);
+  return NULL;
+}
+
 /*!
 Запускает основной процесс программы
 \return код завершения программы
 */
 int main()
-{
+{ 
   int islandArea;
   int pirotsQuantity;
   int partsNumber;
@@ -63,12 +75,15 @@ int main()
     printf("Please, enter a quantity of pirots: ");
     res = InputNumber(&pirotsQuantity);
   }
+  
   int minPartArea = 1;
   if(islandArea > pirotsQuantity) {
     minPartArea = islandArea / pirotsQuantity;
   }
   partsNumber = islandArea / minPartArea;
   printf("The island will be divided for %d parts\n", partsNumber);
+  pthread_t groups[partsNumber];
+  int groupIds[partsNumber]; ///
   res = 0;
   int treasureNumber = 0;
   while(res == 0){
@@ -78,6 +93,26 @@ int main()
       printf("This number is incorrect. Please, try again\n");
       res = 0;
     }
+  }
+  struct part_of_the_island Parts [partsNumber];
+  for(int i = 0; i < partsNumber; i++)
+  {
+    Parts[i].common_area = minPartArea;
+    Parts[i].explored_area = 0;
+    if(treasureNumber == i + 1)
+    {
+      Parts[i].has_treasure = 1;
+    }
+    else
+    {
+      Parts[i].has_treasure = 0;
+    }
+    printf("%d\n", i);
+    groupIds[i] = i;
+    pthread_create(&groups[i], NULL, group, &groupIds[i]);
+  }
+  for (int i = 0; i < partsNumber; i++) {
+    pthread_join(groups[i], NULL);
   }
   return 0;
 }
