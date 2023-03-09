@@ -1,6 +1,6 @@
 /*!
  * \file partsOfTheIsland.h
- * \brief Заголовочный файл с описанием функций
+ * \brief Заголовочный файл с описанием стру
  *
  * Данный файл содержит в себе определения основных
  * функций, используемых в программе.
@@ -9,13 +9,16 @@
 #ifndef PARTS_STRUCTURE
 #define PARTS_STRUCTURE
 
-typedef struct part_of_the_island part_of_the_island;
+typedef struct partOfTheIsland partOfTheIsland;
 
-struct part_of_the_island
+/*!
+* \brief Структура части острова
+*/
+struct partOfTheIsland
 {
-    int common_area;
-    int explored_area;
-    int has_treasure;
+    int commonArea;
+    int exploredArea;
+    int hasTreasure;
     int pirotsQuantity;
 };
 
